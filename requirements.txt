@@ -1,0 +1,12 @@
+numpy
+pillow
+opencv-python
+onnxruntime
+requests
+python-dotenv
+qrcode
+fastapi
+uvicorn
+
+adafruit-blinka
+adafruit-circuitpython-mlx90640
