@@ -163,9 +163,6 @@ class RegisterPalmWorkflow:
             embedding=template_list,
             liveness_passed=self.settings.mock_liveness_passed,
             quality_score=self.settings.mock_quality_score,
-            thermal_min=self.settings.mock_thermal_min,
-            thermal_max=self.settings.mock_thermal_max,
-            thermal_avg=self.settings.mock_thermal_avg,
         )
 
         template_id = ((response.get("data") or {}).get("template_id"))

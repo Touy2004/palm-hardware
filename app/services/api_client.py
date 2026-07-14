@@ -91,9 +91,6 @@ class ApiClient:
         embedding: list[float],
         liveness_passed: bool,
         quality_score: float,
-        thermal_min: float,
-        thermal_max: float,
-        thermal_avg: float,
     ):
         payload = {
             "device_code": self.device_code,
@@ -103,9 +100,6 @@ class ApiClient:
             "embeddings": [embedding],
             "liveness_passed": liveness_passed,
             "quality_score": quality_score,
-            "thermal_min": thermal_min,
-            "thermal_max": thermal_max,
-            "thermal_avg": thermal_avg,
         }
 
         return self._request(
@@ -120,9 +114,6 @@ class ApiClient:
         embedding: list[float],
         liveness_passed: bool,
         quality_score: float,
-        thermal_min: float,
-        thermal_max: float,
-        thermal_avg: float,
     ):
         payload = {
             "device_code": self.device_code,
@@ -131,9 +122,6 @@ class ApiClient:
             "embeddings": [embedding],
             "liveness_passed": liveness_passed,
             "quality_score": quality_score,
-            "thermal_min": thermal_min,
-            "thermal_max": thermal_max,
-            "thermal_avg": thermal_avg,
         }
 
         return self._request(

@@ -80,9 +80,6 @@ class AttendanceWorkflow:
             embedding=embedding,
             liveness_passed=self.settings.mock_liveness_passed,
             quality_score=self.settings.mock_quality_score,
-            thermal_min=self.settings.mock_thermal_min,
-            thermal_max=self.settings.mock_thermal_max,
-            thermal_avg=self.settings.mock_thermal_avg,
         )
 
         data = response.get("data") or {}
