@@ -199,6 +199,36 @@ class PalmTkinterApp:
 
         self.root.after(0, show)
 
+    def show_success_popup(self, name: str, action: str):
+        def show():
+            popup = tk.Toplevel(self.root)
+            popup.title("Success")
+            popup.geometry("400x240+40+40")
+            popup.configure(bg=self.theme["success"])
+            popup.overrideredirect(True)
+            popup.attributes('-topmost', True)
+
+            inner = tk.Frame(popup, bg=self.theme["surface"])
+            inner.pack(fill=tk.BOTH, expand=True, padx=2, pady=2)
+
+            title_lbl = tk.Label(
+                inner, text=f"✅ {action.upper()} SUCCESS", font=("Helvetica", 14, "bold"),
+                fg=self.theme["success"], bg=self.theme["surface"]
+            )
+            title_lbl.pack(pady=(35, 10))
+
+            msg_lbl = tk.Label(
+                inner, text=name, font=("Helvetica", 18, "bold"),
+                fg=self.theme["text_primary"], bg=self.theme["surface"],
+                wraplength=360, justify="center"
+            )
+            msg_lbl.pack(padx=15, pady=10, fill=tk.BOTH, expand=True)
+
+            # Auto-close after 3s
+            self.root.after(3000, popup.destroy)
+
+        self.root.after(0, show)
+
     def post_preview(self, frame_bgr: np.ndarray):
         def update():
             rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
@@ -296,6 +326,9 @@ class PalmTkinterApp:
                 on_status=self.post_status,
                 on_preview=self.post_preview,
             )
-            workflow.run()
+            result = workflow.run()
+            if result:
+                self.show_success_popup(result["full_name"], result["action"])
+                time.sleep(3.0)
 
         self.run_background(task)

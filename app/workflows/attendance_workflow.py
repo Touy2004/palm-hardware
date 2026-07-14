@@ -79,3 +79,8 @@ class AttendanceWorkflow:
         full_name = user.get("full_name", "Unknown user")
 
         self.on_status(f"{action.upper()} successful\n{full_name}")
+
+        return {
+            "full_name": full_name,
+            "action": action
+        }
