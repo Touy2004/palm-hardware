@@ -188,6 +188,43 @@ class PalmTkinterApp:
 
         return self.theme["text_primary"]
 
+    def show_error_popup(self, message: str):
+        def show():
+            popup = tk.Toplevel(self.root)
+            popup.title("Error")
+            popup.geometry("400x240+40+40")
+            popup.configure(bg=self.theme["error"])
+            popup.overrideredirect(True)
+            popup.attributes('-topmost', True)
+
+            # Inner frame for border effect
+            inner = tk.Frame(popup, bg=self.theme["surface"])
+            inner.pack(fill=tk.BOTH, expand=True, padx=2, pady=2)
+
+            title_lbl = tk.Label(
+                inner, text="⚠️ Error Occurred", font=("Helvetica", 14, "bold"),
+                fg=self.theme["error"], bg=self.theme["surface"]
+            )
+            title_lbl.pack(pady=(15, 5))
+
+            # Scrollable or just a large wrapping label
+            msg_lbl = tk.Label(
+                inner, text=message, font=("Helvetica", 10),
+                fg=self.theme["text_primary"], bg=self.theme["surface"],
+                wraplength=360, justify="left", anchor="nw"
+            )
+            msg_lbl.pack(padx=15, pady=5, fill=tk.BOTH, expand=True)
+
+            btn = tk.Button(
+                inner, text="Dismiss", font=("Helvetica", 12, "bold"),
+                bg=self.theme["error"], fg="#FFFFFF",
+                command=popup.destroy, bd=0, cursor="hand2"
+            )
+            btn.pack(pady=15, ipadx=20, ipady=5)
+            self._create_hover_effect(btn, self.theme["error"], "#DC2626")
+
+        self.root.after(0, show)
+
     def post_preview(self, frame_bgr: np.ndarray):
         def update():
             rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
@@ -224,7 +261,8 @@ class PalmTkinterApp:
             try:
                 target()
             except Exception as exc:
-                self.post_status(f"ERROR:\n{exc}")
+                self.post_status("ERROR: Check popup for details")
+                self.show_error_popup(str(exc))
             finally:
                 self.root.after(0, lambda: self.set_busy(False))
 
