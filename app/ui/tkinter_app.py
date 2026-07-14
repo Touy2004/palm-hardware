@@ -1,6 +1,7 @@
 # app/ui/tkinter_app.py
 
 import threading
+import time
 import tkinter as tk
 from pathlib import Path
 
@@ -12,6 +13,8 @@ from app.config.settings import AppSettings
 from app.ui.theme import AppTheme
 from app.workflows.register_workflow import RegisterPalmWorkflow
 from app.workflows.attendance_workflow import AttendanceWorkflow
+from app.services.camera_service import CameraService
+from app.services.thermal_service import ThermalService
 
 
 class PalmTkinterApp:
@@ -28,13 +31,26 @@ class PalmTkinterApp:
         self.root.title("Palm Scanner")
         self.root.geometry(f"{settings.gui_width}x{settings.gui_height}+0+0")
         self.root.resizable(False, False)
-        self.root.configure(bg=self.theme["background"])
+        self.root.configure(bg=self.theme["background_dark"])
 
         # For 3.5 inch display, hide desktop title bar.
-        # Comment this line if you want normal desktop window.
         self.root.overrideredirect(True)
 
         self._build_ui()
+
+        # Initialize hardware services
+        self.camera_service = CameraService(
+            width=self.settings.camera_width,
+            height=self.settings.camera_height,
+            camera_num=self.settings.camera_num,
+        )
+        self.camera_service.open()
+        
+        self.thermal_service = ThermalService()
+
+        # Start background loops
+        self._camera_loop()
+        self._thermal_loop()
 
     def _create_hover_effect(self, button, normal_bg, hover_bg):
         def on_enter(e):
@@ -57,29 +73,18 @@ class PalmTkinterApp:
         )
         self.main_frame.place(x=0, y=0)
 
-        # Top app bar (sleek header)
-        self.app_bar = tk.Frame(
+        # Full screen video background
+        self.image_label = tk.Label(
             self.main_frame,
-            bg=self.theme["surface"],
-            highlightbackground=self.theme["border"],
-            highlightthickness=1,
+            bg=self.theme["surface_dark"],
         )
-        self.app_bar.place(x=0, y=0, width=480, height=50)
+        self.image_label.place(x=0, y=0, width=self.settings.gui_width, height=self.settings.gui_height)
 
-        self.title_label = tk.Label(
-            self.app_bar,
-            text="Palm Attendance",
-            font=("Helvetica", 16, "bold"),
-            fg=self.theme["text_primary"],
-            bg=self.theme["surface"],
-            anchor="w",
-        )
-        self.title_label.place(x=20, y=10, width=360, height=30)
-
+        # Small Top-Right Controls
         self.exit_button = tk.Button(
-            self.app_bar,
+            self.main_frame,
             text="×",
-            font=("Helvetica", 18, "bold"),
+            font=("Helvetica", 14, "bold"),
             bg=self.theme["surface"],
             fg=self.theme["text_secondary"],
             activebackground=self.theme["background"],
@@ -88,42 +93,13 @@ class PalmTkinterApp:
             cursor="hand2",
             command=self.root.destroy,
         )
-        self.exit_button.place(x=430, y=5, width=40, height=40)
+        self.exit_button.place(x=440, y=5, width=35, height=35)
         self._create_hover_effect(self.exit_button, self.theme["surface"], self.theme["background"])
 
-        # Preview card - Bigger and centered
-        self.preview_card = tk.Frame(
-            self.main_frame,
-            bg=self.theme["surface"],
-            highlightbackground=self.theme["border"],
-            highlightthickness=2,
-            bd=0,
-        )
-        self.preview_card.place(x=60, y=65, width=360, height=160)
-
-        self.image_label = tk.Label(
-            self.preview_card,
-            bg=self.theme["surface"],
-        )
-        self.image_label.place(x=5, y=5, width=350, height=150)
-
-        # Status text - Clean and readable
-        self.status_label = tk.Label(
-            self.main_frame,
-            text="Ready",
-            font=("Helvetica", 11, "bold"),
-            fg=self.theme["text_secondary"],
-            bg=self.theme["background"],
-            wraplength=440,
-            justify="center",
-        )
-        self.status_label.place(x=20, y=235, width=440, height=25)
-
-        # Buttons - Sleek and dynamic
         self.register_button = tk.Button(
             self.main_frame,
-            text="Register",
-            font=("Helvetica", 14, "bold"),
+            text="Reg",
+            font=("Helvetica", 10, "bold"),
             bg=self.theme["primary"],
             fg="#FFFFFF",
             activebackground=self.theme["primary_dark"],
@@ -132,38 +108,41 @@ class PalmTkinterApp:
             cursor="hand2",
             command=self.start_register,
         )
-        self.register_button.place(x=30, y=265, width=200, height=45)
+        self.register_button.place(x=390, y=5, width=45, height=35)
         self._create_hover_effect(self.register_button, self.theme["primary"], self.theme["primary_dark"])
 
-        self.attendance_button = tk.Button(
+        # Status text - Overlay at the bottom
+        self.status_label = tk.Label(
             self.main_frame,
-            text="Check In/Out",
-            font=("Helvetica", 14, "bold"),
-            bg=self.theme["success"],
-            fg="#FFFFFF",
-            activebackground="#047857",
-            activeforeground="#FFFFFF",
-            bd=0,
-            cursor="hand2",
-            command=self.start_attendance,
+            text="Ready. Present palm.",
+            font=("Helvetica", 12, "bold"),
+            fg=self.theme["text_inverse"],
+            bg=self.theme["surface_dark"],
+            wraplength=440,
+            justify="center",
         )
-        self.attendance_button.place(x=250, y=265, width=200, height=45)
-        self._create_hover_effect(self.attendance_button, self.theme["success"], "#047857")
+        # Using a slight alpha simulation by using the dark surface color
+        self.status_label.place(x=0, y=280, width=480, height=40)
 
     def set_busy(self, busy: bool):
         self.is_busy = busy
-
         state = tk.DISABLED if busy else tk.NORMAL
-
         self.register_button.config(state=state)
-        self.attendance_button.config(state=state)
 
         if busy:
             self.register_button.config(bg=self.theme["text_hint"])
-            self.attendance_button.config(bg=self.theme["text_hint"])
         else:
             self.register_button.config(bg=self.theme["primary"])
-            self.attendance_button.config(bg=self.theme["success"])
+
+    def _status_color(self, text: str):
+        lower = text.lower()
+        if "error" in lower or "failed" in lower:
+            return self.theme["error"]
+        if "success" in lower or "registered" in lower or "check_in" in lower or "check_out" in lower:
+            return self.theme["success"]
+        if "waiting" in lower or "scan qr" in lower or "processing" in lower:
+            return self.theme["warning"]
+        return self.theme["text_inverse"]
 
     def post_status(self, text: str):
         self.root.after(
@@ -174,20 +153,6 @@ class PalmTkinterApp:
             ),
         )
 
-    def _status_color(self, text: str):
-        lower = text.lower()
-
-        if "error" in lower or "failed" in lower:
-            return self.theme["error"]
-
-        if "success" in lower or "registered" in lower or "check_in" in lower or "check_out" in lower:
-            return self.theme["success"]
-
-        if "waiting" in lower or "scan qr" in lower or "processing" in lower:
-            return self.theme["warning"]
-
-        return self.theme["text_primary"]
-
     def show_error_popup(self, message: str):
         def show():
             popup = tk.Toplevel(self.root)
@@ -197,7 +162,6 @@ class PalmTkinterApp:
             popup.overrideredirect(True)
             popup.attributes('-topmost', True)
 
-            # Inner frame for border effect
             inner = tk.Frame(popup, bg=self.theme["surface"])
             inner.pack(fill=tk.BOTH, expand=True, padx=2, pady=2)
 
@@ -207,7 +171,6 @@ class PalmTkinterApp:
             )
             title_lbl.pack(pady=(15, 5))
 
-            # Scrollable or just a large wrapping label
             msg_lbl = tk.Label(
                 inner, text=message, font=("Helvetica", 10),
                 fg=self.theme["text_primary"], bg=self.theme["surface"],
@@ -229,26 +192,48 @@ class PalmTkinterApp:
         def update():
             rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
             image = Image.fromarray(rgb)
-
-            # Camera preview in 360x160 card
-            image = image.resize((350, 150))
-
+            # Resize to fill the 480x320 screen
+            image = image.resize((self.settings.gui_width, self.settings.gui_height))
             self.current_image = ImageTk.PhotoImage(image)
             self.image_label.config(image=self.current_image)
-
         self.root.after(0, update)
 
     def post_qr(self, qr_path: Path):
         def update():
             image = Image.open(qr_path).convert("RGB")
+            # Enlarge QR code slightly to be readable on full screen
+            image = image.resize((240, 240))
+            
+            # Create a blank dark background and paste QR in center
+            bg = Image.new("RGB", (self.settings.gui_width, self.settings.gui_height), (30, 41, 59))
+            offset = ((self.settings.gui_width - 240) // 2, (self.settings.gui_height - 240) // 2 - 20)
+            bg.paste(image, offset)
 
-            # QR square centered inside preview card
-            image = image.resize((150, 150))
-
-            self.current_image = ImageTk.PhotoImage(image)
+            self.current_image = ImageTk.PhotoImage(bg)
             self.image_label.config(image=self.current_image)
-
         self.root.after(0, update)
+
+    def _camera_loop(self):
+        if not self.is_busy:
+            try:
+                frame = self.camera_service.capture_frame()
+                self.post_preview(frame)
+            except Exception as e:
+                print(f"Camera loop error: {e}")
+        
+        # ~20 FPS refresh
+        self.root.after(50, self._camera_loop)
+
+    def _thermal_loop(self):
+        if not self.is_busy:
+            max_temp = self.thermal_service.read_max_temp()
+            # If a human palm is likely in view
+            if max_temp > 33.0:
+                print(f"Human detected! Max temp: {max_temp:.1f}C")
+                self.start_attendance()
+        
+        # Poll thermal sensor every 1 second
+        self.root.after(1000, self._thermal_loop)
 
     def run_background(self, target):
         if self.is_busy:
@@ -264,7 +249,10 @@ class PalmTkinterApp:
                 self.post_status("ERROR: Check popup for details")
                 self.show_error_popup(str(exc))
             finally:
+                # Add a tiny delay before ready to prevent instant re-triggering
+                time.sleep(1.0)
                 self.root.after(0, lambda: self.set_busy(False))
+                self.post_status("Ready. Present palm.")
 
         thread = threading.Thread(target=wrapper, daemon=True)
         thread.start()
@@ -273,6 +261,7 @@ class PalmTkinterApp:
         def task():
             workflow = RegisterPalmWorkflow(
                 settings=self.settings,
+                camera_service=self.camera_service,
                 on_status=self.post_status,
                 on_preview=self.post_preview,
                 on_qr=self.post_qr,
@@ -285,6 +274,7 @@ class PalmTkinterApp:
         def task():
             workflow = AttendanceWorkflow(
                 settings=self.settings,
+                camera_service=self.camera_service,
                 on_status=self.post_status,
                 on_preview=self.post_preview,
             )

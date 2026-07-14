@@ -33,11 +33,13 @@ class RegisterPalmWorkflow:
     def __init__(
         self,
         settings: AppSettings,
+        camera_service: CameraService,
         on_status: StatusCallback,
         on_preview: PreviewCallback,
         on_qr: ImageCallback,
     ):
         self.settings = settings
+        self.camera_service = camera_service
         self.on_status = on_status
         self.on_preview = on_preview
         self.on_qr = on_qr
@@ -90,41 +92,29 @@ class RegisterPalmWorkflow:
 
         embeddings = []
 
-        camera = CameraService(
-            width=self.settings.camera_width,
-            height=self.settings.camera_height,
-            camera_num=self.settings.camera_num,
-        )
+        for index, instruction in enumerate(CAPTURE_STEPS, start=1):
+            self.on_status(f"Prepare: {instruction}")
 
-        try:
-            camera.open()
+            frame = self.camera_service.countdown_capture(
+                delay_seconds=self.settings.focus_delay,
+                title="Register Palm",
+                instruction=instruction,
+                on_status=self.on_status,
+                on_preview=self.on_preview,
+            )
 
-            for index, instruction in enumerate(CAPTURE_STEPS, start=1):
-                self.on_status(f"Prepare: {instruction}")
+            image_path = self.settings.register_dir / f"enroll_{index}.jpg"
+            cv2.imwrite(str(image_path), frame)
 
-                frame = camera.countdown_capture(
-                    delay_seconds=self.settings.focus_delay,
-                    title="Register Palm",
-                    instruction=instruction,
-                    on_status=self.on_status,
-                    on_preview=self.on_preview,
-                )
+            self.on_status(f"Saved image {index}/8. Processing model...")
 
-                image_path = self.settings.register_dir / f"enroll_{index}.jpg"
-                cv2.imwrite(str(image_path), frame)
+            embedding = self.model.get_embedding_from_frame(
+                image_bgr=frame,
+                debug_dir=self.settings.register_dir / "debug",
+                debug_name=f"enroll_{index}",
+            )
 
-                self.on_status(f"Saved image {index}/8. Processing model...")
-
-                embedding = self.model.get_embedding_from_frame(
-                    image_bgr=frame,
-                    debug_dir=self.settings.register_dir / "debug",
-                    debug_name=f"enroll_{index}",
-                )
-
-                embeddings.append(embedding)
-
-        finally:
-            camera.close()
+            embeddings.append(embedding)
 
         return embeddings
 

@@ -18,10 +18,12 @@ class AttendanceWorkflow:
     def __init__(
         self,
         settings: AppSettings,
+        camera_service: CameraService,
         on_status: StatusCallback,
         on_preview: PreviewCallback,
     ):
         self.settings = settings
+        self.camera_service = camera_service
         self.on_status = on_status
         self.on_preview = on_preview
 
@@ -35,38 +37,26 @@ class AttendanceWorkflow:
     def _capture_embedding(self) -> list[float]:
         self.settings.attendance_dir.mkdir(parents=True, exist_ok=True)
 
-        camera = CameraService(
-            width=self.settings.camera_width,
-            height=self.settings.camera_height,
-            camera_num=self.settings.camera_num,
+        frame = self.camera_service.countdown_capture(
+            delay_seconds=self.settings.focus_delay,
+            title="Attendance",
+            instruction="Place palm at center",
+            on_status=self.on_status,
+            on_preview=self.on_preview,
         )
 
-        try:
-            camera.open()
+        image_path = self.settings.attendance_dir / "attendance_palm.jpg"
+        cv2.imwrite(str(image_path), frame)
 
-            frame = camera.countdown_capture(
-                delay_seconds=self.settings.focus_delay,
-                title="Attendance",
-                instruction="Place palm at center",
-                on_status=self.on_status,
-                on_preview=self.on_preview,
-            )
+        self.on_status("Processing palm model...")
 
-            image_path = self.settings.attendance_dir / "attendance_palm.jpg"
-            cv2.imwrite(str(image_path), frame)
+        embedding = self.model.get_embedding_from_frame(
+            image_bgr=frame,
+            debug_dir=self.settings.attendance_dir / "debug",
+            debug_name="attendance",
+        )
 
-            self.on_status("Processing palm model...")
-
-            embedding = self.model.get_embedding_from_frame(
-                image_bgr=frame,
-                debug_dir=self.settings.attendance_dir / "debug",
-                debug_name="attendance",
-            )
-
-            return self.model.to_list(embedding)
-
-        finally:
-            camera.close()
+        return self.model.to_list(embedding)
 
     def run(self):
         self.on_status("Capturing palm for attendance...")
