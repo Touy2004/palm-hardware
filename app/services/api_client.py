@@ -21,11 +21,7 @@ class ApiClient:
             data = {"raw_text": response.text}
 
         if response.status_code < 200 or response.status_code >= 300:
-            raise RuntimeError(
-                f"API error {response.status_code}\n"
-                f"URL: {url}\n"
-                f"Response: {json.dumps(data, indent=2, ensure_ascii=False)}"
-            )
+            raise RuntimeError(json.dumps(data, indent=2, ensure_ascii=False))
 
         return data
 

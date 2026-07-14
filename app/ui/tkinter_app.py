@@ -197,6 +197,9 @@ class PalmTkinterApp:
             btn.pack(pady=15, ipadx=20, ipady=5)
             self._create_hover_effect(btn, self.theme["error"], "#DC2626")
 
+            # Auto-close after 3s
+            self.root.after(3000, popup.destroy)
+
         self.root.after(0, show)
 
     def show_success_popup(self, name: str, action: str):
@@ -296,6 +299,7 @@ class PalmTkinterApp:
             except Exception as exc:
                 self.post_status("ERROR: Check popup for details")
                 self.show_error_popup(str(exc))
+                time.sleep(3.0)
             finally:
                 # Add a tiny delay before ready to prevent instant re-triggering
                 time.sleep(1.0)
