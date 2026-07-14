@@ -111,6 +111,17 @@ class PalmTkinterApp:
         self.register_button.place(x=390, y=5, width=45, height=35)
         self._create_hover_effect(self.register_button, self.theme["primary"], self.theme["primary_dark"])
 
+        # Temperature display overlay - Top Left
+        self.temp_label = tk.Label(
+            self.main_frame,
+            text="Temp: --.-°C",
+            font=("Helvetica", 14, "bold"),
+            fg=self.theme["success"],
+            bg=self.theme["surface"],
+            bd=0,
+        )
+        self.temp_label.place(x=5, y=5, width=150, height=35)
+
         # Status text - Overlay at the bottom
         self.status_label = tk.Label(
             self.main_frame,
@@ -227,13 +238,20 @@ class PalmTkinterApp:
     def _thermal_loop(self):
         if not self.is_busy:
             max_temp = self.thermal_service.read_max_temp()
-            # If a human palm is likely in view
-            if max_temp > 33.0:
+            
+            # Update real-time temperature overlay
+            if max_temp > 0:
+                self.temp_label.config(text=f"Temp: {max_temp:.1f}°C")
+            else:
+                self.temp_label.config(text="Temp: Error")
+
+            # Trigger condition: Range around 31.5 to 35.0 means hand is detected
+            if 31.5 <= max_temp <= 35.0:
                 print(f"Human detected! Max temp: {max_temp:.1f}C")
                 self.start_attendance()
         
-        # Poll thermal sensor every 1 second
-        self.root.after(1000, self._thermal_loop)
+        # Poll thermal sensor faster for real-time display (e.g. 500ms)
+        self.root.after(500, self._thermal_loop)
 
     def run_background(self, target):
         if self.is_busy:
