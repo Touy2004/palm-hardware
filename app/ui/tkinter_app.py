@@ -31,7 +31,7 @@ class PalmTkinterApp:
         self.root.title("Palm Scanner")
         self.root.geometry(f"{settings.gui_width}x{settings.gui_height}+0+0")
         self.root.resizable(False, False)
-        self.root.configure(bg=self.theme["background_dark"])
+        self.root.configure(bg=self.theme["background"])
 
         # For 3.5 inch display, hide desktop title bar.
         self.root.overrideredirect(True)
@@ -76,7 +76,7 @@ class PalmTkinterApp:
         # Full screen video background
         self.image_label = tk.Label(
             self.main_frame,
-            bg=self.theme["surface_dark"],
+            bg=self.theme["surface"],
         )
         self.image_label.place(x=0, y=0, width=self.settings.gui_width, height=self.settings.gui_height)
 
@@ -116,8 +116,8 @@ class PalmTkinterApp:
             self.main_frame,
             text="Ready. Present palm.",
             font=("Helvetica", 12, "bold"),
-            fg=self.theme["text_inverse"],
-            bg=self.theme["surface_dark"],
+            fg=self.theme["text_primary"],
+            bg=self.theme["surface"],
             wraplength=440,
             justify="center",
         )
@@ -142,7 +142,7 @@ class PalmTkinterApp:
             return self.theme["success"]
         if "waiting" in lower or "scan qr" in lower or "processing" in lower:
             return self.theme["warning"]
-        return self.theme["text_inverse"]
+        return self.theme["text_primary"]
 
     def post_status(self, text: str):
         self.root.after(
