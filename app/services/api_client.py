@@ -21,8 +21,6 @@ class ApiClient:
             data = {"raw_text": response.text}
 
         if response.status_code < 200 or response.status_code >= 300:
-            if isinstance(data, dict) and "message" in data:
-                raise RuntimeError(data["message"])
             raise RuntimeError(
                 f"API error {response.status_code}\n"
                 f"URL: {url}\n"
