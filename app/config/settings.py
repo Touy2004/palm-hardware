@@ -69,7 +69,7 @@ def load_settings() -> AppSettings:
 
         camera_width=env_int("CAMERA_WIDTH", 800),
         camera_height=env_int("CAMERA_HEIGHT", 600),
-        focus_delay=env_int("FOCUS_DELAY", 5),
+        focus_delay=env_int("FOCUS_DELAY", 10),
         camera_num=env_int("CAMERA_NUM", 0),
 
         gui_width=env_int("GUI_WIDTH", 480),
