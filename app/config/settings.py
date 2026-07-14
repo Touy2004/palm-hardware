@@ -62,7 +62,7 @@ def load_settings() -> AppSettings:
     attendance_dir = Path("samples/gui/attendance")
 
     return AppSettings(
-        api_base_url=env_str("API_BASE_URL", "https://api.phoudthasone.com/api/v1").rstrip("/"),
+        api_base_url=env_str("API_BASE_URL", "https://thesis.ceit-iot-lab.site/api/v1").rstrip("/"),
         device_code=env_str("DEVICE_CODE", "DEV-001"),
         model_version=env_str("MODEL_VERSION", "resnet18-palm-onnx-v1"),
         model_path=Path(env_str("MODEL_PATH", "models/palmprint_encoder.onnx")),
