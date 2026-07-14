@@ -1,0 +1,97 @@
+# Python
+
+**pycache**/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+ENV/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Environment secrets
+
+.env
+.env.*
+!.env.example
+
+# Logs
+
+logs/
+*.log
+
+# Model files
+
+models/*.onnx
+models/*.pt
+models/*.pth
+models/*.tflite
+models/*.npy
+
+# Captured palm images and generated data
+
+samples/
+*.jpg
+*.jpeg
+*.png
+*.bmp
+*.tiff
+*.tif
+*.npy
+
+# QR generated images
+
+pairing_qr.png
+qr.png
+
+# OpenCV / camera temp files
+
+*.avi
+*.mp4
+*.mov
+*.mkv
+
+# System files
+
+.DS_Store
+Thumbs.db
+
+# VS Code
+
+.vscode/
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# PyCharm
+
+.idea/
+
+# Test / cache
+
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Build
+
+build/
+dist/
+*.egg-info/
+
+# OS / Raspberry Pi temporary files
+
+*.swp
+*.swo
+*.tmp
+*.bak
+
+# SQLite / local database
+
+*.db
+*.sqlite
+*.sqlite3

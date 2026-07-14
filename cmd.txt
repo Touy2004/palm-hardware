@@ -1,0 +1,49 @@
+cd ~/palm-hardware
+source venv/bin/activate
+
+python scripts/capture_8_palm_images.py \
+  --save-dir samples/enrollment_8 \
+  --focus-delay 5
+
+python scripts/make_8_image_to_template.py \
+  --model models/palmprint_encoder.onnx \
+  --image-dir samples/enrollment_8 \
+  --threshold 0.80 \
+  --debug
+
+python scripts/capture_palm.py \
+  --output samples/test_palm.jpg \
+  --focus-delay 5
+
+  python scripts/compare_palm_with_template.py \
+  --model models/palmprint_encoder.onnx \
+  --template samples/enrollment_template.npy \
+  --image samples/test_palm.jpg \
+  --threshold 0.92 \
+  --debug
+
+python scripts/register_palm_api.py \
+  --template samples/enrollment_template.npy \
+  --qr-output samples/pairing_qr.png
+
+Run check-in / check-out
+
+python scripts/attendance_palm_api.py \
+  --model models/palmprint_encoder.onnx \
+  --focus-delay 5 \
+  --debug
+
+For identify test only, without attendance:
+
+python scripts/attendance_palm_api.py \
+  --model models/palmprint_encoder.onnx \
+  --identify-only \
+  --debug
+
+Use existing captured image:
+
+python scripts/attendance_palm_api.py \
+  --model models/palmprint_encoder.onnx \
+  --image samples/attendance_palm.jpg \
+  --use-existing-image \
+  --debug
