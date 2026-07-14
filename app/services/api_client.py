@@ -125,3 +125,25 @@ class ApiClient:
             "/devices/attendance/palm",
             json=payload,
         )
+
+    def identify_palm(
+        self,
+        model_version: str,
+        embedding: list[float],
+        liveness_passed: bool,
+        quality_score: float,
+    ):
+        payload = {
+            "device_code": self.device_code,
+            "model_version": model_version,
+            "embedding_dim": len(embedding),
+            "embeddings": [embedding],
+            "liveness_passed": liveness_passed,
+            "quality_score": quality_score,
+        }
+
+        return self._request(
+            "POST",
+            "/devices/palm/identify",
+            json=payload,
+        )

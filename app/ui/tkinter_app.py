@@ -13,6 +13,7 @@ from app.config.settings import AppSettings
 from app.ui.theme import AppTheme
 from app.workflows.register_workflow import RegisterPalmWorkflow
 from app.workflows.attendance_workflow import AttendanceWorkflow
+from app.workflows.identify_workflow import IdentifyWorkflow
 from app.services.camera_service import CameraService
 from app.services.thermal_service import ThermalService
 
@@ -111,6 +112,21 @@ class PalmTkinterApp:
         self.register_button.place(x=340, y=5, width=95, height=35)
         self._create_hover_effect(self.register_button, self.theme["primary"], self.theme["primary_dark"])
 
+        self.test_button = tk.Button(
+            self.main_frame,
+            text="Test Palm",
+            font=("Helvetica", 12, "bold"),
+            bg=self.theme["surface"],
+            fg=self.theme["text_primary"],
+            activebackground=self.theme["background"],
+            activeforeground=self.theme["text_primary"],
+            bd=0,
+            cursor="hand2",
+            command=self.start_identify,
+        )
+        self.test_button.place(x=240, y=5, width=95, height=35)
+        self._create_hover_effect(self.test_button, self.theme["surface"], self.theme["background"])
+
         # Temperature display overlay - Top Left
         self.temp_label = tk.Label(
             self.main_frame,
@@ -139,11 +155,14 @@ class PalmTkinterApp:
         self.is_busy = busy
         state = tk.DISABLED if busy else tk.NORMAL
         self.register_button.config(state=state)
+        self.test_button.config(state=state)
 
         if busy:
             self.register_button.config(bg=self.theme["text_hint"])
+            self.test_button.config(bg=self.theme["text_hint"])
         else:
             self.register_button.config(bg=self.theme["primary"])
+            self.test_button.config(bg=self.theme["surface"])
 
     def _status_color(self, text: str):
         lower = text.lower()
@@ -325,6 +344,21 @@ class PalmTkinterApp:
     def start_attendance(self):
         def task():
             workflow = AttendanceWorkflow(
+                settings=self.settings,
+                camera_service=self.camera_service,
+                on_status=self.post_status,
+                on_preview=self.post_preview,
+            )
+            result = workflow.run()
+            if result:
+                self.show_success_popup(result["full_name"], result["action"])
+                time.sleep(3.0)
+
+        self.run_background(task)
+
+    def start_identify(self):
+        def task():
+            workflow = IdentifyWorkflow(
                 settings=self.settings,
                 camera_service=self.camera_service,
                 on_status=self.post_status,
