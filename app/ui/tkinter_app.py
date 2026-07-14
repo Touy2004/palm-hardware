@@ -98,8 +98,8 @@ class PalmTkinterApp:
 
         self.register_button = tk.Button(
             self.main_frame,
-            text="Reg",
-            font=("Helvetica", 10, "bold"),
+            text="Register",
+            font=("Helvetica", 12, "bold"),
             bg=self.theme["primary"],
             fg="#FFFFFF",
             activebackground=self.theme["primary_dark"],
@@ -108,7 +108,7 @@ class PalmTkinterApp:
             cursor="hand2",
             command=self.start_register,
         )
-        self.register_button.place(x=390, y=5, width=45, height=35)
+        self.register_button.place(x=340, y=5, width=95, height=35)
         self._create_hover_effect(self.register_button, self.theme["primary"], self.theme["primary_dark"])
 
         # Temperature display overlay - Top Left

@@ -112,12 +112,15 @@ class CameraService:
         start_time = time.time()
         last_frame = None
 
-        if on_status:
-            on_status(f"{instruction}\nWaiting {delay_seconds}s for autofocus...")
+        last_remaining = -1
 
         while True:
             elapsed = time.time() - start_time
             remaining = max(0, delay_seconds - int(elapsed))
+
+            if on_status and remaining != last_remaining:
+                on_status(f"{instruction}\nWaiting {remaining}s for autofocus...")
+                last_remaining = remaining
 
             frame = self.capture_frame()
             last_frame = frame.copy()
