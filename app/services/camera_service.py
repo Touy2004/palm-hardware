@@ -95,9 +95,14 @@ class CameraService:
 
         return bgr_frame
 
-    def make_preview(self, frame: np.ndarray, lines: list[str]) -> np.ndarray:
+    def make_preview(self, frame: np.ndarray, lines: list[str], instruction: str = "") -> np.ndarray:
         preview = frame.copy()
         draw_center_axis(preview)
+        
+        if instruction:
+            from app.utils.image_utils import draw_hand_guide
+            draw_hand_guide(preview, instruction)
+            
         add_text(preview, lines)
         return preview
 
@@ -135,6 +140,7 @@ class CameraService:
                     f"Focus: {remaining}s | Sharp: {score:.1f}",
                     "Keep palm steady",
                 ],
+                instruction=instruction
             )
 
             if on_preview:
