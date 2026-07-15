@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Palm Scanner
+Comment=Run the Palm Hardware Application
+Exec=/home/palm/dev/palm-hardware/run_kiosk.sh
+Icon=utilities-terminal
+Terminal=true
+Type=Application
+Categories=Utility;
